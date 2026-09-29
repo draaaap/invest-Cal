@@ -3,183 +3,543 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>투자 복리 계산기</title>
+  <title>ETF 포트폴리오 거치 & 적립 복리 시뮬레이터</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Chart.js CDN -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body class="bg-slate-50 text-slate-800 min-h-screen py-10 px-4">
-  <div class="max-w-4xl mx-auto bg-white rounded-2xl shadow-lg border border-slate-100 p-6 md:p-8">
+<body class="bg-slate-50 text-slate-800 min-h-screen py-8 px-4 md:px-8">
+  <div class="max-w-6xl mx-auto">
+    <!-- 헤더 -->
     <header class="mb-8 text-center">
-      <h1 class="text-2xl md:text-3xl font-bold text-slate-900">투자 복리 계산기</h1>
-      <p class="text-sm text-slate-500 mt-2">초기 원금과 매월 적립액을 입력하고 복리 수익을 시각적으로 확인해 보세요.</p>
+      <span class="inline-block px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-semibold mb-2">거치금 + 월적립 복리 시뮬레이터</span>
+      <h1 class="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">ETF 포트폴리오 자산 & 배당 계산기</h1>
+      <p class="text-sm text-slate-500 mt-2">
+        현재 거치된 원금과 매달 불입하는 적립금을 바탕으로 미래 총 자산과 배당 흐름을 시뮬레이션합니다.
+      </p>
     </header>
 
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-      <!-- 입력 폼 -->
-      <div class="lg:col-span-5 space-y-4">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      <!-- 좌측: 입력 패널 -->
+      <div class="lg:col-span-5 bg-white rounded-2xl p-6 shadow-sm border border-slate-200 space-y-6">
         <div>
-          <label class="block text-sm font-semibold text-slate-700 mb-1">초기 투자 원금 (원)</label>
-          <input id="initialPrincipal" type="number" value="10000000" step="100000"
-            class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          <div class="flex justify-between items-center mb-2">
+            <label class="text-sm font-bold text-slate-800">미래 투자 기간 설정</label>
+            <span id="yearsDisplay" class="text-sm font-extrabold text-blue-600">10년 뒤</span>
+          </div>
+          <input id="investYears" type="range" min="1" max="30" value="10" 
+            class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600" />
+          <div class="flex justify-between text-xs text-slate-400 mt-1">
+            <span>1년</span>
+            <span>10년</span>
+            <span>20년</span>
+            <span>30년</span>
+          </div>
         </div>
 
-        <div>
-          <label class="block text-sm font-semibold text-slate-700 mb-1">매월 적립액 (원)</label>
-          <input id="monthlyContribution" type="number" value="500000" step="50000"
-            class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        <div class="border-t border-slate-100 pt-5">
+          <div class="flex justify-between items-center mb-3">
+            <h2 class="text-sm font-bold text-slate-800">종목별 거치금 및 월 적립액 (원)</h2>
+            <button id="resetBtn" class="text-xs text-slate-400 hover:text-slate-600 underline">금액 초기화</button>
+          </div>
+
+          <!-- 종목별 입력 리스트 -->
+          <div class="space-y-3.5" id="etfInputList">
+            <!-- QLD -->
+            <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-100 space-y-2">
+              <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-2">
+                  <span class="w-3 h-3 rounded-full bg-violet-600"></span>
+                  <span class="font-bold text-sm text-slate-900">QLD</span>
+                  <span class="text-xs text-slate-500">나스닥 2X</span>
+                </div>
+                <div class="text-[11px] font-medium text-slate-500">
+                  총수익 <span class="text-violet-600 font-bold">27.5%</span> (배당 0.3%)
+                </div>
+              </div>
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label class="block text-[11px] text-slate-500 mb-0.5 font-medium">현재 거치금액</label>
+                  <input type="text" inputmode="numeric" data-ticker="QLD" data-type="lump" value="5,000,000"
+                    class="etf-input w-full px-2.5 py-1.5 text-right text-xs font-semibold rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                </div>
+                <div>
+                  <label class="block text-[11px] text-slate-500 mb-0.5 font-medium">매월 적립금액</label>
+                  <input type="text" inputmode="numeric" data-ticker="QLD" data-type="monthly" value="200,000"
+                    class="etf-input w-full px-2.5 py-1.5 text-right text-xs font-semibold rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                </div>
+              </div>
+            </div>
+
+            <!-- QQQ -->
+            <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-100 space-y-2">
+              <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-2">
+                  <span class="w-3 h-3 rounded-full bg-blue-500"></span>
+                  <span class="font-bold text-sm text-slate-900">QQQ</span>
+                  <span class="text-xs text-slate-500">나스닥 100</span>
+                </div>
+                <div class="text-[11px] font-medium text-slate-500">
+                  총수익 <span class="text-blue-600 font-bold">18.0%</span> (배당 0.6%)
+                </div>
+              </div>
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label class="block text-[11px] text-slate-500 mb-0.5 font-medium">현재 거치금액</label>
+                  <input type="text" inputmode="numeric" data-ticker="QQQ" data-type="lump" value="10,000,000"
+                    class="etf-input w-full px-2.5 py-1.5 text-right text-xs font-semibold rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                </div>
+                <div>
+                  <label class="block text-[11px] text-slate-500 mb-0.5 font-medium">매월 적립금액</label>
+                  <input type="text" inputmode="numeric" data-ticker="QQQ" data-type="monthly" value="300,000"
+                    class="etf-input w-full px-2.5 py-1.5 text-right text-xs font-semibold rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                </div>
+              </div>
+            </div>
+
+            <!-- VOO -->
+            <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-100 space-y-2">
+              <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-2">
+                  <span class="w-3 h-3 rounded-full bg-teal-500"></span>
+                  <span class="font-bold text-sm text-slate-900">VOO</span>
+                  <span class="text-xs text-slate-500">S&P 500</span>
+                </div>
+                <div class="text-[11px] font-medium text-slate-500">
+                  총수익 <span class="text-teal-600 font-bold">12.5%</span> (배당 1.5%)
+                </div>
+              </div>
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label class="block text-[11px] text-slate-500 mb-0.5 font-medium">현재 거치금액</label>
+                  <input type="text" inputmode="numeric" data-ticker="VOO" data-type="lump" value="10,000,000"
+                    class="etf-input w-full px-2.5 py-1.5 text-right text-xs font-semibold rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                </div>
+                <div>
+                  <label class="block text-[11px] text-slate-500 mb-0.5 font-medium">매월 적립금액</label>
+                  <input type="text" inputmode="numeric" data-ticker="VOO" data-type="monthly" value="300,000"
+                    class="etf-input w-full px-2.5 py-1.5 text-right text-xs font-semibold rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                </div>
+              </div>
+            </div>
+
+            <!-- SCHD -->
+            <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-100 space-y-2">
+              <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-2">
+                  <span class="w-3 h-3 rounded-full bg-amber-500"></span>
+                  <span class="font-bold text-sm text-slate-900">SCHD</span>
+                  <span class="text-xs text-slate-500">미국배당다우</span>
+                </div>
+                <div class="text-[11px] font-medium text-slate-500">
+                  총수익 <span class="text-amber-600 font-bold">11.5%</span> (배당 3.5%)
+                </div>
+              </div>
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label class="block text-[11px] text-slate-500 mb-0.5 font-medium">현재 거치금액</label>
+                  <input type="text" inputmode="numeric" data-ticker="SCHD" data-type="lump" value="5,000,000"
+                    class="etf-input w-full px-2.5 py-1.5 text-right text-xs font-semibold rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                </div>
+                <div>
+                  <label class="block text-[11px] text-slate-500 mb-0.5 font-medium">매월 적립금액</label>
+                  <input type="text" inputmode="numeric" data-ticker="SCHD" data-type="monthly" value="200,000"
+                    class="etf-input w-full px-2.5 py-1.5 text-right text-xs font-semibold rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                </div>
+              </div>
+            </div>
+
+            <!-- JEPQ -->
+            <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-100 space-y-2">
+              <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-2">
+                  <span class="w-3 h-3 rounded-full bg-rose-500"></span>
+                  <span class="font-bold text-sm text-slate-900">JEPQ</span>
+                  <span class="text-xs text-slate-500">월배당/옵션</span>
+                </div>
+                <div class="text-[11px] font-medium text-slate-500">
+                  총수익 <span class="text-rose-600 font-bold">9.5%</span> (배당 9.0%)
+                </div>
+              </div>
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label class="block text-[11px] text-slate-500 mb-0.5 font-medium">현재 거치금액</label>
+                  <input type="text" inputmode="numeric" data-ticker="JEPQ" data-type="lump" value="5,000,000"
+                    class="etf-input w-full px-2.5 py-1.5 text-right text-xs font-semibold rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                </div>
+                <div>
+                  <label class="block text-[11px] text-slate-500 mb-0.5 font-medium">매월 적립금액</label>
+                  <input type="text" inputmode="numeric" data-ticker="JEPQ" data-type="monthly" value="200,000"
+                    class="etf-input w-full px-2.5 py-1.5 text-right text-xs font-semibold rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div>
-          <label class="block text-sm font-semibold text-slate-700 mb-1">투자 기간 (년)</label>
-          <input id="investmentYears" type="number" value="10" min="1" max="50"
-            class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-        </div>
-
-        <div>
-          <label class="block text-sm font-semibold text-slate-700 mb-1">예상 연수익률 (%)</label>
-          <input id="annualRate" type="number" value="8" step="0.5" min="0" max="100"
-            class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-        </div>
-
-        <button id="calcBtn"
-          class="w-full mt-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition duration-200 shadow-md">
-          계산하기
+        <button id="calcBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl shadow-md transition duration-200">
+          미래 자산 & 배당 시뮬레이션 실행
         </button>
       </div>
 
-      <!-- 결과 및 차트 -->
+      <!-- 우측: 결과 및 차트 패널 -->
       <div class="lg:col-span-7 space-y-6">
-        <!-- 결과 수치 카드 -->
-        <div class="grid grid-cols-3 gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200 text-center">
-          <div>
-            <span class="text-xs text-slate-500 block">총 원금</span>
-            <span id="resPrincipal" class="text-base md:text-lg font-bold text-slate-800">-</span>
+        <!-- 핵심 요약 카드 -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm text-center">
+            <span class="text-xs font-semibold text-slate-400">총 납입 원금</span>
+            <div id="cardPrincipal" class="text-base font-bold text-slate-800 mt-1">-</div>
+            <div id="cardPrincipalSub" class="text-[10px] text-slate-400 mt-0.5">거치 + 누적적립</div>
           </div>
-          <div>
-            <span class="text-xs text-slate-500 block">이자(수익)</span>
-            <span id="resInterest" class="text-base md:text-lg font-bold text-emerald-600">-</span>
+          <div class="bg-white p-4 rounded-xl border border-blue-200 bg-blue-50/30 shadow-sm text-center">
+            <span class="text-xs font-bold text-blue-600">최종 예상 자산</span>
+            <div id="cardFinal" class="text-base font-extrabold text-blue-600 mt-1">-</div>
+            <div id="cardGain" class="text-[10px] text-emerald-600 font-semibold mt-0.5">-</div>
           </div>
-          <div>
-            <span class="text-xs text-slate-500 block">최종 자산</span>
-            <span id="resTotal" class="text-base md:text-lg font-bold text-blue-600">-</span>
+          <div class="bg-white p-4 rounded-xl border border-emerald-100 bg-emerald-50/30 shadow-sm text-center">
+            <span class="text-xs font-semibold text-emerald-700">만기 시 연간 배당</span>
+            <div id="cardAnnualDiv" class="text-base font-extrabold text-emerald-600 mt-1">-</div>
+            <div class="text-[10px] text-slate-400 mt-0.5">세전 기준</div>
+          </div>
+          <div class="bg-white p-4 rounded-xl border border-amber-100 bg-amber-50/30 shadow-sm text-center">
+            <span class="text-xs font-semibold text-amber-700">만기 시 월평균 배당</span>
+            <div id="cardMonthlyDiv" class="text-base font-extrabold text-amber-600 mt-1">-</div>
+            <div class="text-[10px] text-slate-400 mt-0.5">연 배당 ÷ 12</div>
           </div>
         </div>
 
-        <!-- 누적 자산 그래프 -->
-        <div class="h-64 md:h-72 w-full">
-          <canvas id="growthChart"></canvas>
+        <!-- 탭 차트 -->
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+          <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+            <div class="flex space-x-2">
+              <button id="tabGrowth" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-blue-600 text-white">
+                📈 총 자산 성장
+              </button>
+              <button id="tabDividend" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200">
+                💰 연간 배당금 추이
+              </button>
+            </div>
+            <span id="chartCaption" class="text-xs text-slate-400">월 복리 적립식 기준</span>
+          </div>
+
+          <div class="h-72 md:h-80 w-full">
+            <canvas id="mainChart"></canvas>
+          </div>
         </div>
+
+        <!-- 상세 테이블 -->
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+          <h3 class="text-sm font-bold text-slate-800 mb-3">만기 시점 종목별 납입 및 수령액</h3>
+          <div class="overflow-x-auto">
+            <table class="w-full text-xs text-left">
+              <thead class="text-slate-400 border-b border-slate-100">
+                <tr>
+                  <th class="pb-2">종목</th>
+                  <th class="pb-2 text-right">거치 / 월적립</th>
+                  <th class="pb-2 text-right">총 납입 원금</th>
+                  <th class="pb-2 text-right">미래 예상 자산</th>
+                  <th class="pb-2 text-right">예상 월 배당금</th>
+                </tr>
+              </thead>
+              <tbody id="detailTableBody" class="divide-y divide-slate-100">
+                <!-- JS 동적 생성 -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
       </div>
     </div>
   </div>
 
   <script>
+    const ETF_META = {
+      QLD:  { name: 'QLD',  cagr: 0.275, divYield: 0.003, color: '#7c3aed' },
+      QQQ:  { name: 'QQQ',  cagr: 0.180, divYield: 0.006, color: '#3b82f6' },
+      VOO:  { name: 'VOO',  cagr: 0.125, divYield: 0.015, color: '#14b8a6' },
+      SCHD: { name: 'SCHD', cagr: 0.115, divYield: 0.035, color: '#f59e0b' },
+      JEPQ: { name: 'JEPQ', cagr: 0.095, divYield: 0.090, color: '#f43f5e' }
+    };
+
+    let activeTab = 'growth';
+    let currentChartData = null;
     let chartInstance = null;
 
-    function formatKRW(val) {
-      return Math.round(val).toLocaleString('ko-KR') + '원';
+    // 천 단위 쉼표 포맷 함수
+    function formatNumberWithCommas(num) {
+      if (isNaN(num)) return '';
+      return num.toLocaleString('ko-KR');
     }
 
-    function calculateCompound() {
-      const initialPrincipal = Number(document.getElementById('initialPrincipal').value) || 0;
-      const monthlyContribution = Number(document.getElementById('monthlyContribution').value) || 0;
-      const years = Number(document.getElementById('investmentYears').value) || 1;
-      const annualRate = (Number(document.getElementById('annualRate').value) || 0) / 100;
+    // 쉼표 제거 후 숫자로 파싱
+    function parseNumber(str) {
+      if (!str) return 0;
+      const clean = String(str).replace(/,/g, '');
+      return Number(clean) || 0;
+    }
 
-      const monthlyRate = annualRate / 12;
+    function formatKRW(val) {
+      if (val >= 100000000) {
+        return `${(val / 100000000).toFixed(2)}억 원`;
+      } else if (val >= 10000) {
+        return `${Math.round(val / 10000).toLocaleString('ko-KR')}만 원`;
+      }
+      return `${Math.round(val).toLocaleString('ko-KR')}원`;
+    }
+
+    // 인풋 필드 콤마 자동 서식 설정
+    function attachCommaFormatter(input) {
+      input.addEventListener('input', (e) => {
+        const raw = e.target.value.replace(/[^0-9]/g, '');
+        if (raw === '') {
+          e.target.value = '';
+        } else {
+          e.target.value = Number(raw).toLocaleString('ko-KR');
+        }
+        calculateForecast();
+      });
+    }
+
+    function calculateForecast() {
+      const years = Number(document.getElementById('investYears').value) || 10;
+      document.getElementById('yearsDisplay').innerText = `${years}년 뒤`;
+
+      const tickers = Object.keys(ETF_META);
+      const holdings = {};
+      let totalInitialLump = 0;
+      let totalMonthlySum = 0;
+
+      tickers.forEach(t => {
+        const lumpInput = document.querySelector(`.etf-input[data-ticker="${t}"][data-type="lump"]`);
+        const monthlyInput = document.querySelector(`.etf-input[data-ticker="${t}"][data-type="monthly"]`);
+        const lump = parseNumber(lumpInput ? lumpInput.value : 0);
+        const monthly = parseNumber(monthlyInput ? monthlyInput.value : 0);
+        holdings[t] = { lump, monthly };
+        totalInitialLump += lump;
+        totalMonthlySum += monthly;
+      });
+
       const totalMonths = years * 12;
+      const yearLabels = [];
+      const totalGrowthSeries = [];
+      const totalDividendSeries = [];
+      const stockValueSeries = { QLD: [], QQQ: [], VOO: [], SCHD: [], JEPQ: [] };
+      const stockDividendSeries = { QLD: [], QQQ: [], VOO: [], SCHD: [], JEPQ: [] };
 
-      const labels = [];
-      const principalData = [];
-      const interestData = [];
+      const currentAsset = {};
+      tickers.forEach(t => {
+        currentAsset[t] = holdings[t].lump;
+      });
 
-      let currentTotal = initialPrincipal;
-      let currentPrincipal = initialPrincipal;
+      // 0년차(시작 시점) 기록
+      yearLabels.push('현재');
+      let initTotalAsset = 0;
+      let initTotalDividend = 0;
+      tickers.forEach(t => {
+        const val = currentAsset[t];
+        const div = val * ETF_META[t].divYield;
+        stockValueSeries[t].push(Math.round(val));
+        stockDividendSeries[t].push(Math.round(div));
+        initTotalAsset += val;
+        initTotalDividend += div;
+      });
+      totalGrowthSeries.push(Math.round(initTotalAsset));
+      totalDividendSeries.push(Math.round(initTotalDividend));
 
-      labels.push('시작');
-      principalData.push(currentPrincipal);
-      interestData.push(0);
-
+      // 1개월 단위 복리 계산
       for (let m = 1; m <= totalMonths; m++) {
-        currentTotal = currentTotal * (1 + monthlyRate) + monthlyContribution;
-        currentPrincipal += monthlyContribution;
+        tickers.forEach(t => {
+          const monthlyRate = ETF_META[t].cagr / 12;
+          currentAsset[t] = currentAsset[t] * (1 + monthlyRate) + holdings[t].monthly;
+        });
 
-        // 매 12개월(1년) 단위로 차트 포인트 기록
         if (m % 12 === 0) {
-          const year = m / 12;
-          labels.push(`${year}년`);
-          principalData.push(Math.round(currentPrincipal));
-          interestData.push(Math.round(Math.max(0, currentTotal - currentPrincipal)));
+          const y = m / 12;
+          yearLabels.push(`${y}년`);
+          let yearlyAsset = 0;
+          let yearlyDiv = 0;
+
+          tickers.forEach(t => {
+            const val = currentAsset[t];
+            const div = val * ETF_META[t].divYield;
+            stockValueSeries[t].push(Math.round(val));
+            stockDividendSeries[t].push(Math.round(div));
+            yearlyAsset += val;
+            yearlyDiv += div;
+          });
+
+          totalGrowthSeries.push(Math.round(yearlyAsset));
+          totalDividendSeries.push(Math.round(yearlyDiv));
         }
       }
 
-      const totalInterest = Math.max(0, currentTotal - currentPrincipal);
+      const totalInvestedPrincipal = totalInitialLump + (totalMonthlySum * totalMonths);
+      const finalAsset = totalGrowthSeries[totalGrowthSeries.length - 1];
+      const finalAnnualDiv = totalDividendSeries[totalDividendSeries.length - 1];
+      const finalMonthlyDiv = finalAnnualDiv / 12;
+      const totalGain = finalAsset - totalInvestedPrincipal;
 
-      // UI 수치 업데이트
-      document.getElementById('resPrincipal').innerText = formatKRW(currentPrincipal);
-      document.getElementById('resInterest').innerText = formatKRW(totalInterest);
-      document.getElementById('resTotal').innerText = formatKRW(currentTotal);
+      // 상단 카드 갱신
+      document.getElementById('cardPrincipal').innerText = formatKRW(totalInvestedPrincipal);
+      document.getElementById('cardFinal').innerText = formatKRW(finalAsset);
+      document.getElementById('cardGain').innerText = `수익 +${formatKRW(totalGain)}`;
+      document.getElementById('cardAnnualDiv').innerText = formatKRW(finalAnnualDiv);
+      document.getElementById('cardMonthlyDiv').innerText = formatKRW(finalMonthlyDiv);
 
-      // 차트 렌더링
-      renderChart(labels, principalData, interestData);
+      currentChartData = {
+        labels: yearLabels,
+        totalGrowthSeries,
+        totalDividendSeries,
+        stockValueSeries,
+        stockDividendSeries,
+        holdings
+      };
+
+      renderActiveChart();
+      renderTable(holdings, stockValueSeries, stockDividendSeries, years);
     }
 
-    function renderChart(labels, principalData, interestData) {
-      const ctx = document.getElementById('growthChart').getContext('2d');
-      if (chartInstance) {
-        chartInstance.destroy();
-      }
+    function renderActiveChart() {
+      if (!currentChartData) return;
+      const ctx = document.getElementById('mainChart').getContext('2d');
+      if (chartInstance) chartInstance.destroy();
 
-      chartInstance = new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels: labels,
-          datasets: [
-            {
-              label: '투자 원금',
-              data: principalData,
-              backgroundColor: '#94a3b8',
-              stack: 'stack1'
-            },
-            {
-              label: '복리 수익',
-              data: interestData,
-              backgroundColor: '#2563eb',
-              stack: 'stack1'
-            }
-          ]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            tooltip: {
-              callbacks: {
-                label: function(context) {
-                  return `${context.dataset.label}: ${context.raw.toLocaleString('ko-KR')}원`;
-                }
-              }
-            }
+      const { labels, totalGrowthSeries, totalDividendSeries, stockValueSeries, stockDividendSeries } = currentChartData;
+
+      if (activeTab === 'growth') {
+        document.getElementById('chartCaption').innerText = '거치금 + 월 적립 복리 자산 기준';
+        const datasets = [
+          {
+            label: '전체 포트폴리오 총합',
+            data: totalGrowthSeries,
+            borderColor: '#0f172a',
+            backgroundColor: 'rgba(15, 23, 42, 0.05)',
+            borderWidth: 3,
+            fill: true,
+            tension: 0.2
           },
-          scales: {
-            x: { stacked: true },
-            y: {
-              stacked: true,
-              ticks: {
-                callback: function(val) {
-                  return (val / 10000).toLocaleString('ko-KR') + '만';
+          ...Object.keys(ETF_META).map(ticker => ({
+            label: ticker,
+            data: stockValueSeries[ticker],
+            borderColor: ETF_META[ticker].color,
+            borderWidth: 1.8,
+            pointRadius: 2,
+            tension: 0.2
+          }))
+        ];
+
+        chartInstance = new Chart(ctx, {
+          type: 'line',
+          data: { labels, datasets },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+              tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${formatKRW(ctx.raw)}` } },
+              legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } }
+            },
+            scales: {
+              y: {
+                ticks: {
+                  callback: val => (val >= 100000000 ? `${(val/100000000).toFixed(1)}억` : `${(val/10000).toLocaleString()}만`)
                 }
               }
             }
           }
-        }
+        });
+      } else {
+        document.getElementById('chartCaption').innerText = '연간 발생 배당금 추이';
+        const datasets = Object.keys(ETF_META).map(ticker => ({
+          label: ticker,
+          data: stockDividendSeries[ticker],
+          backgroundColor: ETF_META[ticker].color,
+          stack: 'dividendStack'
+        }));
+
+        chartInstance = new Chart(ctx, {
+          type: 'bar',
+          data: { labels, datasets },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              tooltip: { callbacks: { label: ctx => `${ctx.dataset.label} 배당: ${formatKRW(ctx.raw)}` } },
+              legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } }
+            },
+            scales: {
+              x: { stacked: true },
+              y: {
+                stacked: true,
+                ticks: {
+                  callback: val => (val >= 100000000 ? `${(val/100000000).toFixed(1)}억` : `${(val/10000).toLocaleString()}만`)
+                }
+              }
+            }
+          }
+        });
+      }
+    }
+
+    function renderTable(holdings, stockValueSeries, stockDividendSeries, years) {
+      const tableBody = document.getElementById('detailTableBody');
+      tableBody.innerHTML = '';
+
+      Object.keys(ETF_META).forEach(t => {
+        const { lump, monthly } = holdings[t];
+        const stockPrincipal = lump + (monthly * years * 12);
+        const finalVal = stockValueSeries[t][stockValueSeries[t].length - 1];
+        const finalAnnualDiv = stockDividendSeries[t][stockDividendSeries[t].length - 1];
+        const finalMonthlyDiv = finalAnnualDiv / 12;
+
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td class="py-2.5 font-bold flex items-center space-x-1.5">
+            <span class="w-2 h-2 rounded-full" style="background-color: ${ETF_META[t].color}"></span>
+            <span class="text-slate-800">${t}</span>
+          </td>
+          <td class="py-2.5 text-right text-slate-500 font-medium">
+            ${formatKRW(lump)} <span class="text-slate-300">/</span> 월 ${formatKRW(monthly)}
+          </td>
+          <td class="py-2.5 text-right text-slate-600 font-medium">${formatKRW(stockPrincipal)}</td>
+          <td class="py-2.5 text-right font-bold text-slate-900">${formatKRW(finalVal)}</td>
+          <td class="py-2.5 text-right font-bold text-amber-600">${formatKRW(finalMonthlyDiv)}</td>
+        `;
+        tableBody.appendChild(row);
       });
     }
 
-    document.getElementById('calcBtn').addEventListener('click', calculateCompound);
-    window.addEventListener('DOMContentLoaded', calculateCompound);
+    // 탭 전환 이벤트
+    document.getElementById('tabGrowth').addEventListener('click', () => {
+      activeTab = 'growth';
+      document.getElementById('tabGrowth').className = 'px-3 py-1.5 text-xs font-bold rounded-lg bg-blue-600 text-white';
+      document.getElementById('tabDividend').className = 'px-3 py-1.5 text-xs font-bold rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200';
+      renderActiveChart();
+    });
+
+    document.getElementById('tabDividend').addEventListener('click', () => {
+      activeTab = 'dividend';
+      document.getElementById('tabDividend').className = 'px-3 py-1.5 text-xs font-bold rounded-lg bg-emerald-600 text-white';
+      document.getElementById('tabGrowth').className = 'px-3 py-1.5 text-xs font-bold rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200';
+      renderActiveChart();
+    });
+
+    // 슬라이더 및 버튼 이벤트
+    document.getElementById('investYears').addEventListener('input', calculateForecast);
+    document.getElementById('calcBtn').addEventListener('click', calculateForecast);
+
+    // 모든 입력창에 천 단위 콤마 포맷터 바인딩
+    document.querySelectorAll('.etf-input').forEach(input => {
+      attachCommaFormatter(input);
+    });
+
+    document.getElementById('resetBtn').addEventListener('click', () => {
+      document.querySelectorAll('.etf-input').forEach(input => input.value = '0');
+      calculateForecast();
+    });
+
+    window.addEventListener('DOMContentLoaded', calculateForecast);
   </script>
 </body>
 </html>

@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>투자 복리 계산기</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen py-10 px-4">
+  <div class="max-w-4xl mx-auto bg-white rounded-2xl shadow-lg border border-slate-100 p-6 md:p-8">
+    <header class="mb-8 text-center">
+      <h1 class="text-2xl md:text-3xl font-bold text-slate-900">투자 복리 계산기</h1>
+      <p class="text-sm text-slate-500 mt-2">초기 원금과 매월 적립액을 입력하고 복리 수익을 시각적으로 확인해 보세요.</p>
+    </header>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <!-- 입력 폼 -->
+      <div class="lg:col-span-5 space-y-4">
+        <div>
+          <label class="block text-sm font-semibold text-slate-700 mb-1">초기 투자 원금 (원)</label>
+          <input id="initialPrincipal" type="number" value="10000000" step="100000"
+            class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold text-slate-700 mb-1">매월 적립액 (원)</label>
+          <input id="monthlyContribution" type="number" value="500000" step="50000"
+            class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold text-slate-700 mb-1">투자 기간 (년)</label>
+          <input id="investmentYears" type="number" value="10" min="1" max="50"
+            class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold text-slate-700 mb-1">예상 연수익률 (%)</label>
+          <input id="annualRate" type="number" value="8" step="0.5" min="0" max="100"
+            class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        </div>
+
+        <button id="calcBtn"
+          class="w-full mt-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition duration-200 shadow-md">
+          계산하기
+        </button>
+      </div>
+
+      <!-- 결과 및 차트 -->
+      <div class="lg:col-span-7 space-y-6">
+        <!-- 결과 수치 카드 -->
+        <div class="grid grid-cols-3 gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200 text-center">
+          <div>
+            <span class="text-xs text-slate-500 block">총 원금</span>
+            <span id="resPrincipal" class="text-base md:text-lg font-bold text-slate-800">-</span>
+          </div>
+          <div>
+            <span class="text-xs text-slate-500 block">이자(수익)</span>
+            <span id="resInterest" class="text-base md:text-lg font-bold text-emerald-600">-</span>
+          </div>
+          <div>
+            <span class="text-xs text-slate-500 block">최종 자산</span>
+            <span id="resTotal" class="text-base md:text-lg font-bold text-blue-600">-</span>
+          </div>
+        </div>
+
+        <!-- 누적 자산 그래프 -->
+        <div class="h-64 md:h-72 w-full">
+          <canvas id="growthChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let chartInstance = null;
+
+    function formatKRW(val) {
+      return Math.round(val).toLocaleString('ko-KR') + '원';
+    }
+
+    function calculateCompound() {
+      const initialPrincipal = Number(document.getElementById('initialPrincipal').value) || 0;
+      const monthlyContribution = Number(document.getElementById('monthlyContribution').value) || 0;
+      const years = Number(document.getElementById('investmentYears').value) || 1;
+      const annualRate = (Number(document.getElementById('annualRate').value) || 0) / 100;
+
+      const monthlyRate = annualRate / 12;
+      const totalMonths = years * 12;
+
+      const labels = [];
+      const principalData = [];
+      const interestData = [];
+
+      let currentTotal = initialPrincipal;
+      let currentPrincipal = initialPrincipal;
+
+      labels.push('시작');
+      principalData.push(currentPrincipal);
+      interestData.push(0);
+
+      for (let m = 1; m <= totalMonths; m++) {
+        currentTotal = currentTotal * (1 + monthlyRate) + monthlyContribution;
+        currentPrincipal += monthlyContribution;
+
+        // 매 12개월(1년) 단위로 차트 포인트 기록
+        if (m % 12 === 0) {
+          const year = m / 12;
+          labels.push(`${year}년`);
+          principalData.push(Math.round(currentPrincipal));
+          interestData.push(Math.round(Math.max(0, currentTotal - currentPrincipal)));
+        }
+      }
+
+      const totalInterest = Math.max(0, currentTotal - currentPrincipal);
+
+      // UI 수치 업데이트
+      document.getElementById('resPrincipal').innerText = formatKRW(currentPrincipal);
+      document.getElementById('resInterest').innerText = formatKRW(totalInterest);
+      document.getElementById('resTotal').innerText = formatKRW(currentTotal);
+
+      // 차트 렌더링
+      renderChart(labels, principalData, interestData);
+    }
+
+    function renderChart(labels, principalData, interestData) {
+      const ctx = document.getElementById('growthChart').getContext('2d');
+      if (chartInstance) {
+        chartInstance.destroy();
+      }
+
+      chartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: '투자 원금',
+              data: principalData,
+              backgroundColor: '#94a3b8',
+              stack: 'stack1'
+            },
+            {
+              label: '복리 수익',
+              data: interestData,
+              backgroundColor: '#2563eb',
+              stack: 'stack1'
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  return `${context.dataset.label}: ${context.raw.toLocaleString('ko-KR')}원`;
+                }
+              }
+            }
+          },
+          scales: {
+            x: { stacked: true },
+            y: {
+              stacked: true,
+              ticks: {
+                callback: function(val) {
+                  return (val / 10000).toLocaleString('ko-KR') + '만';
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    document.getElementById('calcBtn').addEventListener('click', calculateCompound);
+    window.addEventListener('DOMContentLoaded', calculateCompound);
+  </script>
+</body>
+</html>
